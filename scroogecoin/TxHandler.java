@@ -83,7 +83,7 @@ public class TxHandler {
             }
         }
 
-        // taking naive approach to finding mutually valid transaction set by adding in order
+        // taking naive (but should be correct) approach to finding mutually valid transaction set by adding in order
         List<Transaction> acceptedTxs = new ArrayList<>();
         Set<UTXO> usedUTXOs = new HashSet<>();
         List<UTXO> potentialUTXOs;
@@ -104,7 +104,18 @@ public class TxHandler {
             }
         }
 
+        for (UTXO utxo : usedUTXOs) {
+            utxoPool.removeUTXO(utxo);
+        }
+
+        for (Transaction tx : acceptedTxs) {
+            for (int i = 0; i < tx.numOutputs(); i++) {
+                utxoPool.addUTXO(new UTXO(tx.getHash(), i), tx.getOutput(i));
+            }
+        }
+
         Transaction[] txs = (Transaction[]) acceptedTxs.toArray();
+
         return txs;
     }
 
