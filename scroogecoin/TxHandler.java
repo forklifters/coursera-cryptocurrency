@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TxHandler {
 
@@ -49,6 +46,8 @@ public class TxHandler {
             } else {
                 utxoSet.add(unverifiedUTXO);
             }
+
+            totalInput += corrOutput.value;
         }
 
         int totalOutput = 0;
@@ -114,7 +113,7 @@ public class TxHandler {
             }
         }
 
-        Transaction[] txs = (Transaction[]) acceptedTxs.toArray();
+        Transaction[] txs = acceptedTxs.toArray(new Transaction[0]);
 
         return txs;
     }
