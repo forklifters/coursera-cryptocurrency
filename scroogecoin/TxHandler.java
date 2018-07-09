@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TxHandler {
@@ -74,7 +76,35 @@ public class TxHandler {
      */
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
         // IMPLEMENT THIS
-        Transaction[] txs = {};
+        List<Transaction> validTxs = new ArrayList<>();
+        for (Transaction tx : possibleTxs) {
+            if (isValidTx(tx)) {
+                validTxs.add(tx);
+            }
+        }
+
+        // taking naive approach to finding mutually valid transaction set by adding in order
+        List<Transaction> acceptedTxs = new ArrayList<>();
+        Set<UTXO> usedUTXOs = new HashSet<>();
+        List<UTXO> potentialUTXOs;
+        boolean shouldAddSet;
+        for (Transaction tx : validTxs) {
+            shouldAddSet = true;
+            potentialUTXOs = new ArrayList<>();
+            for (Transaction.Input input : tx.getInputs()) {
+                UTXO utxoFromInput = new UTXO(input.prevTxHash, input.outputIndex);
+                if (usedUTXOs.contains(utxoFromInput)) {
+                    shouldAddSet = false;
+                }
+                potentialUTXOs.add(utxoFromInput);
+            }
+            if (shouldAddSet) {
+                acceptedTxs.add(tx);
+                usedUTXOs.addAll(potentialUTXOs);
+            }
+        }
+
+        Transaction[] txs = (Transaction[]) acceptedTxs.toArray();
         return txs;
     }
 
