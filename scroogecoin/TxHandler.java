@@ -1,3 +1,6 @@
+import java.util.HashSet;
+import java.util.Set;
+
 public class TxHandler {
 
     /**
@@ -24,7 +27,44 @@ public class TxHandler {
      */
     public boolean isValidTx(Transaction tx) {
         // IMPLEMENT THIS
+        int totalInput = 0;
+        Set<UTXO> utxoSet = new HashSet<>();
+        for (int i = 0; i < tx.numInputs(); i++) {
+            Transaction.Input input = tx.getInput(i);
+            // PART 1
+            UTXO unverifiedUTXO = new UTXO(input.prevTxHash, input.outputIndex);
+            if (!utxoPool.contains(unverifiedUTXO)) {
+                return false;
+            }
+            // PART 2
+            Transaction.Output corrOutput = utxoPool.getTxOutput(unverifiedUTXO);
+            if (!Crypto.verifySignature(corrOutput.address, tx.getRawDataToSign(i), input.signature)) {
+                return false;
+            }
+            // PART 3
+            if (utxoSet.contains(unverifiedUTXO)) {
+                return false;
+            } else {
+                utxoSet.add(unverifiedUTXO);
+            }
+        }
 
+        int totalOutput = 0;
+        for (Transaction.Output output : tx.getOutputs()) {
+            // PART 4
+            if (output.value < 0) {
+                return false;
+            }
+            totalOutput += output.value;
+        }
+
+        // PART 5
+        if (totalInput < totalOutput) {
+            return false;
+        }
+
+        // if everything passes
+        return true;
     }
 
     /**
@@ -34,6 +74,8 @@ public class TxHandler {
      */
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
         // IMPLEMENT THIS
+        Transaction[] txs = {};
+        return txs;
     }
 
 }
