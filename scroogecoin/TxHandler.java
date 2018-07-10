@@ -82,25 +82,37 @@ public class TxHandler {
             }
         }
 
-        // taking naive (but should be correct) approach to finding mutually valid transaction set by adding in order
+        // Taking naive (but should be correct) approach to finding mutually valid transaction set by adding in order.
+        // Going to keep looping through transactions until no new ones are added because transactions can reference
+        //  themselves IN THE SAME BLOCK i.e. in this set of transactions.
         List<Transaction> acceptedTxs = new ArrayList<>();
+        List<Transaction> stillValidTxs = new ArrayList<>();
         Set<UTXO> usedUTXOs = new HashSet<>();
-        List<UTXO> potentialUTXOs;
-        boolean shouldAddSet;
-        for (Transaction tx : validTxs) {
-            shouldAddSet = true;
-            potentialUTXOs = new ArrayList<>();
-            for (Transaction.Input input : tx.getInputs()) {
-                UTXO utxoFromInput = new UTXO(input.prevTxHash, input.outputIndex);
-                if (usedUTXOs.contains(utxoFromInput)) {
-                    shouldAddSet = false;
+        List<UTXO> tempUTXOs;
+        boolean shouldAddTx;
+        boolean newTxsAdded = true;
+        while (newTxsAdded) {
+            newTxsAdded = false;
+            for (Transaction tx : validTxs) {
+                shouldAddTx = true;
+                tempUTXOs = new ArrayList<>();
+                for (Transaction.Input input : tx.getInputs()) { // validation for a transaction
+                    UTXO utxoFromInput = new UTXO(input.prevTxHash, input.outputIndex);
+                    if (usedUTXOs.contains(utxoFromInput)) {
+                        shouldAddTx = false;
+                    }
+                    tempUTXOs.add(utxoFromInput);
                 }
-                potentialUTXOs.add(utxoFromInput);
+                if (shouldAddTx) { // after validation
+                    acceptedTxs.add(tx);
+                    newTxsAdded = true;
+                    usedUTXOs.addAll(tempUTXOs);
+                } else {
+                    stillValidTxs.add(tx); // we want to cycle through transactions again, but not ones that have been used already
+                }
             }
-            if (shouldAddSet) {
-                acceptedTxs.add(tx);
-                usedUTXOs.addAll(potentialUTXOs);
-            }
+            validTxs = stillValidTxs;
+            stillValidTxs = new ArrayList<>();
         }
 
         for (UTXO utxo : usedUTXOs) {
